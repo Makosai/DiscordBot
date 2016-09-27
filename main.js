@@ -24,6 +24,18 @@ var music = {
   paused: false
 }
 
+var playlists = [{
+];
+/* playlist layout
+name: "",
+songs: [{
+  name: "",
+  link: ""
+}],
+locked: true // Whether or not the playlist is deletable.
+}
+*/
+
 bot.on('ready', () => {
   console.log('I am ready!');
 });
@@ -36,12 +48,8 @@ bot.on("message", function(message) {
   }
 
   // Make sure that only commands entered in #bot are registered.
-  if(!message.channel.name === "bot")
+  if(!(message.channel.name === "bot"))
     return;
-
-  if(message.content === "Hi") {
-    message.reply("Go away, filthy human.");
-  }
 
   if(message.content === "Bye" && message.author.username === "๖ۣۜSolus von Soul") {
     message.reply("bye <3 -- Gute nacht.");
@@ -118,7 +126,7 @@ bot.on("message", function(message) {
 
         voice.stream = ytdl(music.current, {filter : 'audioonly'});
         voice.dispatcher = voice.voiceConnection.playStream(voice.stream, streamOptions);
-        ytdl.getInfo(music.current, function(err, info) { music.title = info.title; message.channel.sendMessage("Now playing: " + music.title); });
+        ytdl.getInfo(music.current, function(err, info) { console.log(info); music.title = info.title; message.channel.sendMessage("Now playing: " + music.title); });
         break;
 
       // Stop the music.
@@ -164,11 +172,92 @@ bot.on("message", function(message) {
           // check if not a number
           if(!isNaN(newVolume)) {
             message.channel.sendMessage("Volume set to " + newVolume + "%.");
-            voice.dispatcher.setVolume(newVolume / 100);
+            streamOptions.volume = (newVolume / 100);
+            if(voice.dispatcher != null)
+              voice.dispatcher.setVolume(newVolume / 100);
             return;
           }
         }
         break;
+
+      case "playlist":
+        if(params == null) {
+          var allPlaylists = "";
+
+          var trackNum = 1;
+          playlists.forEach(function(playlist) {
+             allPlaylists += "- " + playlist.name;
+             playlist.songs.forEach(function(song) {
+               allPlaylists += "    " + song.name + "(" + song.link + ")";
+             })
+          });
+          if(allPlaylists != "") {
+            message.channel.sendMessage('');
+          }
+
+          return;
+        }
+
+        // Make sure there's at least 1 parameter present.
+        if(params[0] == null || params[1] == null) {
+          return;
+        }
+
+        switch(params[0]) {
+          // !playlist create <playlist name>
+          case "create":
+            var newList = {
+              name: "",
+              songs: [{
+                name: "",
+                link: ""
+              }],
+              locked: true // Whether or not the playlist is deletable.
+            }
+
+            newList.name = params.substring(params[0].length);
+            playlists.push(newList);
+            break;
+
+          // !playlist add <playlist name> <link>
+          case "add":
+            var playlistName = "";
+            for(var i = 1; i < params.length - 1; i++) {
+
+            }
+            playlists.forEach(function(playlist) {
+              if()
+            });
+            break;
+
+          // !playlist remove <playlist name> [link]
+          case "remove":
+            break;
+
+          // !playlist play <playlist name> [track number]
+          case "play":
+            break;
+
+          // !playlist show <playlist name>
+          case "show":
+            break;
+        }
+        break;
+
+      case "help":
+        message.channel.sendMessage("\
+          <> = required, [] = optional, | = or.\n\
+          \n\n\
+          !join <voice channel>\n\
+          !leave\n\
+          !play <Youtube Video | Youtube Playlist>\n\
+          !stop\n\
+          !pause\n\
+          !resume\n\
+          !volume [volume (number only) out of 100]\
+        ");
+        break;
+
     }
   }
 
