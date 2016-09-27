@@ -126,7 +126,7 @@ bot.on("message", function(message) {
 
         voice.stream = ytdl(music.current, {filter : 'audioonly'});
         voice.dispatcher = voice.voiceConnection.playStream(voice.stream, streamOptions);
-        ytdl.getInfo(music.current, function(err, info) { console.log(info); music.title = info.title; message.channel.sendMessage("Now playing: " + music.title); });
+        ytdl.getInfo(music.current, function(err, info) { music.title = info.title; message.channel.sendMessage("Now playing: " + music.title); });
         break;
 
       // Stop the music.
@@ -208,10 +208,7 @@ bot.on("message", function(message) {
           case "create":
             var newList = {
               name: "",
-              songs: [{
-                name: "",
-                link: ""
-              }],
+              songs: [],
               locked: true // Whether or not the playlist is deletable.
             }
 
@@ -226,7 +223,15 @@ bot.on("message", function(message) {
 
             }
             playlists.forEach(function(playlist) {
-              if()
+              if(playlist.name == playlistName) {
+                var songName = "";
+                var songLink = params[params.length - 1];
+                ytdl.getInfo(songLink, function(err, info) { songName = info.title; });
+                var song = {
+                  name: songName,
+                  link: songLink
+                };
+              }
             });
             break;
 
