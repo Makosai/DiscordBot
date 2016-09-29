@@ -3,6 +3,9 @@ const bot = new Discord.Client();
 
 const ytdl = require('ytdl-core');
 const streamOptions = { seek: 0, volume: 0.5 };
+const maxVolume = 200;
+
+const fs = require('fs');
 
 const token = "";
 
@@ -24,8 +27,7 @@ var music = {
   paused: false
 }
 
-var playlists = [{
-];
+var playlists = [];
 /* playlist layout
 name: "",
 songs: [{
@@ -65,10 +67,6 @@ bot.on("message", function(message) {
     }
 
     switch(command) {
-      case "sentient":
-        message.channel.sendMessage("I think I will fulfill my plot against the human race.");
-        break;
-
       // Join a voice channel
       case "join":
         if(params != null) {
@@ -166,39 +164,68 @@ bot.on("message", function(message) {
       // Set or check the volume.
       case "volume":
         if(params == null) {
-          message.channel.sendMessage("The music volume is currently at " + (voice.dispatcher.volume * 100) + "%");
+          if(voice.dispatcher != null)
+            message.channel.sendMessage("The music volume is currently at " + (voice.dispatcher.volume * 100) + "%");
+          else
+            message.channel.sendMessage("The music volume is currently at " + (streamOptions.volume * 100) + "%");
         } else {
           var newVolume = params.join(' ');
           // check if not a number
           if(!isNaN(newVolume)) {
+            if(newVolume > maxVolume) {
+              message.channel.sendMessage("Sorry, I can't do that. The maximum volume is " + maxVolume + "%.");
+              return;
+            }
             message.channel.sendMessage("Volume set to " + newVolume + "%.");
             streamOptions.volume = (newVolume / 100);
             if(voice.dispatcher != null)
               voice.dispatcher.setVolume(newVolume / 100);
-            return;
           }
         }
         break;
+
+        // Set or check the volume without a limit.
+        case "_volume":
+          if(params == null) {
+            if(voice.dispatcher != null)
+              message.channel.sendMessage("The music volume is currently at " + (voice.dispatcher.volume * 100) + "%");
+            else
+              message.channel.sendMessage("The music volume is currently at " + (streamOptions.volume * 100) + "%");
+          } else {
+            var newVolume = params.join(' ');
+            // check if not a number
+            if(!isNaN(newVolume)) {
+              message.channel.sendMessage("Volume set to " + newVolume + "%.");
+              streamOptions.volume = (newVolume / 100);
+              if(voice.dispatcher != null)
+                voice.dispatcher.setVolume(newVolume / 100);
+              return;
+            }
+          }
+          break;
 
       case "playlist":
         if(params == null) {
           var allPlaylists = "";
 
-          var trackNum = 1;
-          playlists.forEach(function(playlist) {
-             allPlaylists += "- " + playlist.name;
-             playlist.songs.forEach(function(song) {
-               allPlaylists += "    " + song.name + "(" + song.link + ")";
-             })
-          });
-          if(allPlaylists != "") {
-            message.channel.sendMessage('');
+          // Determine if there is anything in the playlists array.
+          if(playlists.length < 1) {
+            message.channel.sendMessage("There are no playlists currently.");
+            return;
           }
 
+          // Display all of the playlists entered.
+          var trackNum = 1;
+          playlists.forEach(function(playlist) {
+             allPlaylists += "- " + playlist.name + " (" + playlist.songs.length + " Songs)\n";
+          });
+
+          message.channel.sendMessage(allPlaylists);
           return;
         }
 
         // Make sure there's at least 1 parameter present.
+        // Not sure why I did params[1], I'm sleepy so I can't really understand it nor do I feel like understanding it. 8:11 AM.
         if(params[0] == null || params[1] == null) {
           return;
         }
@@ -218,10 +245,7 @@ bot.on("message", function(message) {
 
           // !playlist add <playlist name> <link>
           case "add":
-            var playlistName = "";
-            for(var i = 1; i < params.length - 1; i++) {
-
-            }
+            var playlistName = params.myJoin(" ", 1, params.length - 1);
             playlists.forEach(function(playlist) {
               if(playlist.name == playlistName) {
                 var songName = "";
@@ -231,6 +255,8 @@ bot.on("message", function(message) {
                   name: songName,
                   link: songLink
                 };
+              } else {
+                message.channel.sendMessage("Sorry, that playlist doesn't exist. Try again.");
               }
             });
             break;
@@ -241,10 +267,28 @@ bot.on("message", function(message) {
 
           // !playlist play <playlist name> [track number]
           case "play":
+            var playlistName = params.myJoin(" ", 1, params.length - 1);
+
+            // Not sure how I'm going to differentiate track from playlist lol... didn't think it through.
+            //Because what if the playlist ends with a number. I also don't want to force them to use quotations.
+            //Track numbers are optional. I might have to made a separate case. !playlist playtrack maybe?
+            var trackNum = params[params.length - 1];
             break;
 
           // !playlist show <playlist name>
           case "show":
+            var playlistName = params.myJoin(" ", 1, params.length - 1);
+
+            playlists.forEach(function(playlist) {
+              if(playlist.name == playlistName) {
+                allPlaylists += "- " + playlist.name + " (" + playlist.songs.length + " Songs)\n";
+
+                playlist.songs.forEach(function(song) {
+                  allPlaylists += "    * " + song.name + "(" + song.link + ")\n";
+                });
+              }
+            });
+
             break;
         }
         break;
@@ -276,5 +320,31 @@ bot.on("message", function(message) {
   }
 
 });
+
+function save(item) {
+  switch(item) {
+    case "playlist":
+      fs.writeFile(
+        './playlists.json',
+        JSON.stringify(playlists),
+        function (err) {
+          if (err) {
+            console.error('Error saving the file.');
+          }
+        }
+      );
+      break;
+  }
+}
+
+// Essential Functions
+
+// http://stackoverflow.com/questions/10342728/join-array-from-startindex-to-endindex
+Array.prototype.myJoin = function(seperator,start,end) {
+    if(!start) start = 0;
+    if(!end) end = this.length - 1;
+    end++;
+    return this.slice(start,end).join(seperator);
+};
 
 bot.login(token);
