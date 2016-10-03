@@ -37,6 +37,8 @@ songs: [{
 locked: true // Whether or not the playlist is deletable.
 }
 */
+var track = 0;
+var playlisting = false;
 
 bot.on('ready', () => {
   console.log('I am ready!');
@@ -234,29 +236,34 @@ bot.on("message", function(message) {
           // !playlist create <playlist name>
           case "create":
             var newList = {
-              name: "",
+              name: params.myJoin(" ", 1, params.length - 1),
               songs: [],
               locked: true // Whether or not the playlist is deletable.
             }
 
-            newList.name = params.substring(params[0].length);
             playlists.push(newList);
+
+            message.channel.sendMessage("Created a playlist named \"" + newList.name + "\".");
             break;
 
           // !playlist add <playlist name> <link>
           case "add":
-            var playlistName = params.myJoin(" ", 1, params.length - 1);
+            var playlistName = params.myJoin(" ", 1, params.length - 2);
             playlists.forEach(function(playlist) {
               if(playlist.name == playlistName) {
-                var songName = "";
                 var songLink = params[params.length - 1];
-                ytdl.getInfo(songLink, function(err, info) { songName = info.title; });
-                var song = {
-                  name: songName,
-                  link: songLink
-                };
+                ytdl.getInfo(songLink, function(err, info) {
+                  var song = {
+                    name: info.title,
+                    link: songLink
+                  };
+
+                  playlist.songs.push(song);
+                  message.channel.sendMessage("Added \"" + song.name + "\" to \"" + playlistName + "\".");
+                });
+
               } else {
-                message.channel.sendMessage("Sorry, that playlist doesn't exist. Try again.");
+                message.channel.sendMessage("Sorry, the playlist \"" + playlistName + "\" doesn't exist. Try again.");
               }
             });
             break;
@@ -265,14 +272,40 @@ bot.on("message", function(message) {
           case "remove":
             break;
 
-          // !playlist play <playlist name> [track number]
+          case "stop":
+            playlisting = false;
+            message.channel.sendMessage("Stopping the playlist.");
+            break;
+
+          // !playlist play <playlist name> --> removed [track number]
           case "play":
             var playlistName = params.myJoin(" ", 1, params.length - 1);
+
+            playlisting = true;
+
+            voice.stream = ytdl(playlists[0].songs[0].link, {filter : 'audioonly'});
+            voice.dispatcher = voice.voiceConnection.playStream(voice.stream, streamOptions);
+            ytdl.getInfo(playlists[0].songs[track].link, function(err, info) { music.title = playlists[0].songs[0].name; message.channel.sendMessage("Now playing: " + music.title); });
+            message.channel.sendMessage("Playing \"" + playlistName + "\" now. Type `!playlist stop` to stop the playlist.");
 
             // Not sure how I'm going to differentiate track from playlist lol... didn't think it through.
             //Because what if the playlist ends with a number. I also don't want to force them to use quotations.
             //Track numbers are optional. I might have to made a separate case. !playlist playtrack maybe?
             var trackNum = params[params.length - 1];
+
+            voice.dispatcher.on('end', () => {
+              if(!playlisting) {
+                return;
+              }
+              track++;
+              if(track >= playlists[0].songs.length) {
+                track = 0;
+              }
+              playlists[0].songs[track];
+              voice.stream = ytdl(playlists[0].songs[track].link, {filter : 'audioonly'});
+              voice.dispatcher = voice.voiceConnection.playStream(voice.stream, streamOptions);
+              ytdl.getInfo(playlists[0].songs[track].link, function(err, info) { music.title = playlists[0].songs[track].name; message.channel.sendMessage("Now playing: " + music.title); });
+            });
             break;
 
           // !playlist show <playlist name>
@@ -295,16 +328,43 @@ bot.on("message", function(message) {
 
       case "help":
         message.channel.sendMessage("\
-          <> = required, [] = optional, | = or.\n\
-          \n\n\
+`<> = required, [] = optional, | = or.`\n\
+          \n\
+**Basic Commands**\n\
           !join <voice channel>\n\
           !leave\n\
           !play <Youtube Video | Youtube Playlist>\n\
           !stop\n\
           !pause\n\
           !resume\n\
-          !volume [volume (number only) out of 100]\
+          !volume [volume (number only) 0-200]\n\
+          !_volume [volume (number only) 0 - any number but doesn't save the value]\n\
+          \n\
+**Playlist Commands**\n\
+          !playlist\n\
+          !playlist create <playlist name>\n\
+          !playlist add <playlist name> <link>\n\
+          *!playlist remove <playlist name>*\n\
+          *!playlist removesong <playlist name> <song index>*\n\
+          *!playlist play <playlist name>*\n\
+          *!playlist playtrack <playlist name> <song index>*\n\
+          !playlist show <playlist name>\n\
+          *!playlist shuffleplay <playlist name>*\n\
         ");
+
+        // !playlist shuffleplay will randomly select an index from the array and push it to a new list.
+        /* Pseudocode
+        function shuffle(oldArray) {
+          var newArray = [];
+          while(length(oldArray) > 0) {
+            var item = pick(oldArray); // Pick a random element from the array.
+            oldArray -= item; // Remove
+            newArray += item; // Push
+          }
+
+          return newArray;
+        }
+        */
         break;
 
     }
