@@ -1,4 +1,4 @@
-###### Current Version: v0.0.1a
+###### Current Version: v0.0.2a
 
 ## Test Matrix for Current Version Before Release
 ---
@@ -14,7 +14,30 @@
 
 ## Changelog
 ---
- #### **_9/29/2016 - v0.0.1a_**
+
+#### **_10/3/2016 - v0.0.2a_**
+ 
+__\*\* Changes \*\*__
+Coming soon...
+
+__\*\* Fixes \*\*__
+- Multiple !playlist commands now work.
+- !playlist create now actually creates a playlist.
+- add now actually adds a playlist to a playlist.
+- add actually checks if the playlist exists.
+- When running most playlist commands, the bot will tell you if it failed or did it successfully.
+- stop actually stops the playlist but doesn't stop the music (see todo).
+
+__\*\* Todo \*\*__
+- create command should be reviewed for any possible bugs.
+- create shouldn't make duplicate playlists.
+- rename command should be created.
+- all ytdl.getInfo() calls should handle errors incase the link is not valid (if info != null maybe?).
+- UPDATE TODO AND TEST MATRIX AND FIXES SECTION AND HELP COMMAND.
+- stop command should stop the music and not just the playlist.
+
+
+#### **_9/29/2016 - v0.0.1a_**
  
 __\*\* Fixes \*\*__
 - Fixed a minor bug with the !volume command.
