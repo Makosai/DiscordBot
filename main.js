@@ -2,7 +2,10 @@ const Discord = require("discord.js");
 const bot = new Discord.Client();
 
 const ytdl = require('ytdl-core');
-const streamOptions = { seek: 0, volume: 0.5 };
+const streamOptions = {
+  seek: 0,
+  volume: 0.5
+};
 const maxVolume = 200;
 
 const fs = require('fs');
@@ -52,45 +55,50 @@ bot.on("message", function(message) {
   }
 
   // Make sure that only commands entered in #bot are registered.
-  if(!(message.channel.name === "bot"))
+  if (!(message.channel.name === "bot"))
     return;
 
-  if(message.content === "Bye" && message.author.username === "๖ۣۜSolus von Soul") {
+  if (message.content === "Bye" && message.author.username ===
+    "๖ۣۜSolus von Soul") {
     message.reply("bye <3 -- Gute nacht.");
   }
 
   // ! command list
-  if(message.content.charAt(0) === "!") {
+  if (message.content.charAt(0) === "!") {
     var tempVal = message.content.indexOf(' ');
-    var command = message.content.substring(1, tempVal == -1 ? message.content.length : tempVal);
+    var command = message.content.substring(1, tempVal == -1 ? message.content
+      .length : tempVal);
     var params = null;
-    if(message.content.includes(' ')) {
+    if (message.content.includes(' ')) {
       var params = message.content.split(' ').slice(1); // .join(' ') makes it a string with spaces.
     }
 
-    switch(command) {
+    switch (command) {
       // Join a voice channel
       case "join":
-        if(params != null) {
+        if (params != null) {
           var channelName = params.join(' ');
           var channels = message.guild.channels;
 
           // Find out of the requested channel exists.
           channels.forEach(function(channel) {
-            if(channel.type === "voice" && channel.name.toLowerCase() === channelName.toLowerCase()) {
+            if (channel.type === "voice" && channel.name.toLowerCase() ===
+              channelName.toLowerCase()) {
               voice.voiceChannel = channel;
               return;
             }
           });
 
-          if(voice.voiceChannel == null) {
-            message.channel.sendMessage("Sorry, I could not find the \"" + channelName + "\" voice channel.")
+          if (voice.voiceChannel == null) {
+            message.channel.sendMessage("Sorry, I could not find the \"" +
+              channelName + "\" voice channel.")
           } else {
             voice.voiceChannel.join()
               .then(connection => {
                 voice.voiceConnection = connection;
                 console.log("Connected to " + channelName + "!");
-                message.channel.sendMessage("Joining the \"" + voice.voiceChannel.name + "\" voice channel.");
+                message.channel.sendMessage("Joining the \"" + voice.voiceChannel
+                  .name + "\" voice channel.");
               })
               .catch(console.log);
           }
@@ -98,7 +106,7 @@ bot.on("message", function(message) {
         break;
 
       case "leave":
-        if(voice.voiceChannel != null) {
+        if (voice.voiceChannel != null) {
           voice.voiceChannel.leave();
           voice.dispatcher = null;
           voice.stream = null;
@@ -110,13 +118,13 @@ bot.on("message", function(message) {
 
       case "play":
         // Prevent connection errors.
-        if(voice.voiceChannel != null && voice.voiceConnection == null) {
+        if (voice.voiceChannel != null && voice.voiceConnection == null) {
           console.log("Failed to play since connection was not available.");
           return;
         }
 
         // Make sure there are parameters.
-        if(params == null) {
+        if (params == null) {
           return;
         }
 
@@ -124,14 +132,20 @@ bot.on("message", function(message) {
 
         //voice.dispatcher.end();
 
-        voice.stream = ytdl(music.current, {filter : 'audioonly'});
-        voice.dispatcher = voice.voiceConnection.playStream(voice.stream, streamOptions);
-        ytdl.getInfo(music.current, function(err, info) { music.title = info.title; message.channel.sendMessage("Now playing: " + music.title); });
+        voice.stream = ytdl(music.current, {
+          filter: 'audioonly'
+        });
+        voice.dispatcher = voice.voiceConnection.playStream(voice.stream,
+          streamOptions);
+        ytdl.getInfo(music.current, function(err, info) {
+          music.title = info.title;
+          message.channel.sendMessage("Now playing: " + music.title);
+        });
         break;
 
-      // Stop the music.
+        // Stop the music.
       case "stop":
-        if(!music.playing || voice.dispatcher == null) {
+        if (!music.playing || voice.dispatcher == null) {
           return;
         }
 
@@ -141,20 +155,21 @@ bot.on("message", function(message) {
         message.channel.sendMessage("Music stopped.");
         break;
 
-      // Pause the music.
+        // Pause the music.
       case "pause":
-        if(music.paused || !playing || voice.dispatcher == null) {
+        if (music.paused || !playing || voice.dispatcher == null) {
           return;
         }
 
         music.paused = true;
         voice.dispatcher.pause();
-        message.channel.sendMessage("Music paused (may still be playing, but silently).");
+        message.channel.sendMessage(
+          "Music paused (may still be playing, but silently).");
         break;
 
-      // Resume the music.
+        // Resume the music.
       case "resume":
-        if(!music.paused || playing || voice.dispatcher == null) {
+        if (!music.paused || playing || voice.dispatcher == null) {
           return;
         }
 
@@ -163,55 +178,61 @@ bot.on("message", function(message) {
         message.channel.sendMessage("Music resumed.");
         break;
 
-      // Set or check the volume.
+        // Set or check the volume.
       case "volume":
-        if(params == null) {
-          if(voice.dispatcher != null)
-            message.channel.sendMessage("The music volume is currently at " + (voice.dispatcher.volume * 100) + "%");
+        if (params == null) {
+          if (voice.dispatcher != null)
+            message.channel.sendMessage("The music volume is currently at " +
+              (voice.dispatcher.volume * 100) + "%");
           else
-            message.channel.sendMessage("The music volume is currently at " + (streamOptions.volume * 100) + "%");
+            message.channel.sendMessage("The music volume is currently at " +
+              (streamOptions.volume * 100) + "%");
         } else {
           var newVolume = params.join(' ');
           // check if not a number
-          if(!isNaN(newVolume)) {
-            if(newVolume > maxVolume) {
-              message.channel.sendMessage("Sorry, I can't do that. The maximum volume is " + maxVolume + "%.");
+          if (!isNaN(newVolume)) {
+            if (newVolume > maxVolume) {
+              message.channel.sendMessage(
+                "Sorry, I can't do that. The maximum volume is " +
+                maxVolume + "%.");
               return;
             }
             message.channel.sendMessage("Volume set to " + newVolume + "%.");
             streamOptions.volume = (newVolume / 100);
-            if(voice.dispatcher != null)
+            if (voice.dispatcher != null)
               voice.dispatcher.setVolume(newVolume / 100);
           }
         }
         break;
 
         // Set or check the volume without a limit.
-        case "_volume":
-          if(params == null) {
-            if(voice.dispatcher != null)
-              message.channel.sendMessage("The music volume is currently at " + (voice.dispatcher.volume * 100) + "%");
-            else
-              message.channel.sendMessage("The music volume is currently at " + (streamOptions.volume * 100) + "%");
-          } else {
-            var newVolume = params.join(' ');
-            // check if not a number
-            if(!isNaN(newVolume)) {
-              message.channel.sendMessage("Volume set to " + newVolume + "%.");
-              streamOptions.volume = (newVolume / 100);
-              if(voice.dispatcher != null)
-                voice.dispatcher.setVolume(newVolume / 100);
-              return;
-            }
+      case "_volume":
+        if (params == null) {
+          if (voice.dispatcher != null)
+            message.channel.sendMessage("The music volume is currently at " +
+              (voice.dispatcher.volume * 100) + "%");
+          else
+            message.channel.sendMessage("The music volume is currently at " +
+              (streamOptions.volume * 100) + "%");
+        } else {
+          var newVolume = params.join(' ');
+          // check if not a number
+          if (!isNaN(newVolume)) {
+            message.channel.sendMessage("Volume set to " + newVolume + "%.");
+            streamOptions.volume = (newVolume / 100);
+            if (voice.dispatcher != null)
+              voice.dispatcher.setVolume(newVolume / 100);
+            return;
           }
-          break;
+        }
+        break;
 
       case "playlist":
-        if(params == null) {
+        if (params == null) {
           var allPlaylists = "";
 
           // Determine if there is anything in the playlists array.
-          if(playlists.length < 1) {
+          if (playlists.length < 1) {
             message.channel.sendMessage("There are no playlists currently.");
             return;
           }
@@ -219,7 +240,8 @@ bot.on("message", function(message) {
           // Display all of the playlists entered.
           var trackNum = 1;
           playlists.forEach(function(playlist) {
-             allPlaylists += "- " + playlist.name + " (" + playlist.songs.length + " Songs)\n";
+            allPlaylists += "- " + playlist.name + " (" + playlist.songs
+              .length + " Songs)\n";
           });
 
           message.channel.sendMessage(allPlaylists);
@@ -228,29 +250,43 @@ bot.on("message", function(message) {
 
         // Make sure there's at least 1 parameter present.
         // Not sure why I did params[1], I'm sleepy so I can't really understand it nor do I feel like understanding it. 8:11 AM.
-        if(params[0] == null || params[1] == null) {
+        if (params[0] == null || params[1] == null) {
           return;
         }
 
-        switch(params[0]) {
+        switch (params[0]) {
           // !playlist create <playlist name>
           case "create":
+            var playlistName = params.myJoin(" ", 1, params.length - 1);
+
+            // Make sure the playlist doesn't already exist.
+            playlists.forEach(function(playlist) {
+              if (playlist.name == playlistName) {
+                message.channel.sendMessage("Sorry, the playlist \"" +
+                  playlistName + "\" already exists. Try again.");
+                return;
+              }
+            });
+
             var newList = {
-              name: params.myJoin(" ", 1, params.length - 1),
+              name: paramName,
               songs: [],
               locked: true // Whether or not the playlist is deletable.
             }
 
             playlists.push(newList);
 
-            message.channel.sendMessage("Created a playlist named \"" + newList.name + "\".");
+            message.channel.sendMessage("Created a playlist named \"" +
+              newList.name + "\".");
             break;
 
-          // !playlist add <playlist name> <link>
+            // !playlist add <playlist name> <link>
           case "add":
             var playlistName = params.myJoin(" ", 1, params.length - 2);
+
             playlists.forEach(function(playlist) {
-              if(playlist.name == playlistName) {
+              if (playlist.name == playlistName) {
+                found = true;
                 var songLink = params[params.length - 1];
                 ytdl.getInfo(songLink, function(err, info) {
                   var song = {
@@ -259,66 +295,89 @@ bot.on("message", function(message) {
                   };
 
                   playlist.songs.push(song);
-                  message.channel.sendMessage("Added \"" + song.name + "\" to \"" + playlistName + "\".");
+                  message.channel.sendMessage("Added \"" + song.name +
+                    "\" to \"" + playlistName + "\".");
                 });
 
-              } else {
-                message.channel.sendMessage("Sorry, the playlist \"" + playlistName + "\" doesn't exist. Try again.");
+                save()
+                return;
               }
             });
+
+            message.channel.sendMessage("Sorry, the playlist \"" +
+              playlistName + "\" doesn't exist. Try again.");
             break;
 
-          // !playlist remove <playlist name> [link]
+            // !playlist remove <playlist name>
           case "remove":
+            var playlistName = params.myJoin(" ", 1, params.length - 2);
+
+            playlists.forEach(function(playlist) {
+              if (playlist.name == playlistName) {
+                return;
+              }
+            });
+
+            message.channel.sendMessage("Sorry, the playlist \"" +
+              playlistName + "\" doesn't exist. Try again.");
             break;
 
-          case "stop":
-            playlisting = false;
-            message.channel.sendMessage("Stopping the playlist.");
-            break;
+            // !playlist removesong <playlist name> <song index>
+          case "removesong":
 
-          // !playlist play <playlist name> --> removed [track number]
+            // !playlist play <playlist name> --> removed [track number]
           case "play":
             var playlistName = params.myJoin(" ", 1, params.length - 1);
 
             playlisting = true;
 
-            voice.stream = ytdl(playlists[0].songs[0].link, {filter : 'audioonly'});
-            voice.dispatcher = voice.voiceConnection.playStream(voice.stream, streamOptions);
-            ytdl.getInfo(playlists[0].songs[track].link, function(err, info) { music.title = playlists[0].songs[0].name; message.channel.sendMessage("Now playing: " + music.title); });
-            message.channel.sendMessage("Playing \"" + playlistName + "\" now. Type `!playlist stop` to stop the playlist.");
+            voice.stream = ytdl(playlists[0].songs[0].link, {
+              filter: 'audioonly'
+            });
+            voice.dispatcher = voice.voiceConnection.playStream(voice.stream,
+              streamOptions);
+            ytdl.getInfo(playlists[0].songs[track].link, function(err, info) {
+              music.title = playlists[0].songs[0].name;
+              message.channel.sendMessage("Now playing: " + music.title);
+            });
+            message.channel.sendMessage("Playing \"" + playlistName +
+              "\" now. Type `!playlist stop` to stop the playlist.");
 
             // Not sure how I'm going to differentiate track from playlist lol... didn't think it through.
             //Because what if the playlist ends with a number. I also don't want to force them to use quotations.
             //Track numbers are optional. I might have to made a separate case. !playlist playtrack maybe?
             var trackNum = params[params.length - 1];
 
-            voice.dispatcher.on('end', () => {
-              if(!playlisting) {
-                return;
-              }
-              track++;
-              if(track >= playlists[0].songs.length) {
-                track = 0;
-              }
-              playlists[0].songs[track];
-              voice.stream = ytdl(playlists[0].songs[track].link, {filter : 'audioonly'});
-              voice.dispatcher = voice.voiceConnection.playStream(voice.stream, streamOptions);
-              ytdl.getInfo(playlists[0].songs[track].link, function(err, info) { music.title = playlists[0].songs[track].name; message.channel.sendMessage("Now playing: " + music.title); });
-            });
+            playlistSetup();
             break;
 
-          // !playlist show <playlist name>
+          case "stop":
+            if (!music.playing || !playlisting || voice.dispatcher == null) { //playlisting --> music.playlisting
+              return;
+            }
+
+            music.playing = false;
+            music.paused = false;
+            voice.dispatcher.end();
+            playlisting = false;
+
+            message.channel.sendMessage("Stopping the playlist.");
+            break;
+
+            // !playlist show <playlist name>
           case "show":
             var playlistName = params.myJoin(" ", 1, params.length - 1);
 
             playlists.forEach(function(playlist) {
-              if(playlist.name == playlistName) {
-                allPlaylists += "- " + playlist.name + " (" + playlist.songs.length + " Songs)\n";
+              if (playlist.name == playlistName) {
+                allPlaylists += "- " + playlist.name + " (" + playlist.songs
+                  .length + " Songs)\n";
 
                 playlist.songs.forEach(function(song) {
-                  allPlaylists += "    * " + song.name + "(" + song.link + ")\n";
+                  allPlaylists += "    * " + song.name + "(" + song
+                    .link + ")\n";
                 });
+                break;
               }
             });
 
@@ -326,8 +385,12 @@ bot.on("message", function(message) {
         }
         break;
 
+      case "playtrack":
+        break;
+
       case "help":
-        message.channel.sendMessage("\
+        message.channel.sendMessage(
+          "\
 `<> = required, [] = optional, | = or.`\n\
           \n\
 **Basic Commands**\n\
@@ -346,11 +409,13 @@ bot.on("message", function(message) {
           !playlist add <playlist name> <link>\n\
           *!playlist remove <playlist name>*\n\
           *!playlist removesong <playlist name> <song index>*\n\
-          *!playlist play <playlist name>*\n\
+          !playlist play <playlist name>\n\
           *!playlist playtrack <playlist name> <song index>*\n\
+          !playlist stop\n\
           !playlist show <playlist name>\n\
           *!playlist shuffleplay <playlist name>*\n\
-        ");
+        "
+        );
 
         // !playlist shuffleplay will randomly select an index from the array and push it to a new list.
         /* Pseudocode
@@ -371,7 +436,7 @@ bot.on("message", function(message) {
   }
 
   // Just some debugging stuff to be used at any time.
-  if(debugging) {
+  if (debugging) {
     console.log(message.author.username);
     console.log(message.content);
     console.log(message.content.charAt(0));
@@ -381,13 +446,39 @@ bot.on("message", function(message) {
 
 });
 
-function save(item) {
-  switch(item) {
-    case "playlist":
+function playlistSetup() {
+  voice.dispatcher.on('end', () => {
+    if (!playlisting) {
+      return;
+    }
+    track++;
+    if (track >= playlists[0].songs.length) {
+      track = 0;
+    }
+    playlists[0].songs[track];
+    voice.stream = ytdl(playlists[0].songs[track].link, {
+      filter: 'audioonly'
+    });
+    voice.dispatcher = voice.voiceConnection.playStream(voice
+      .stream, streamOptions);
+    ytdl.getInfo(playlists[0].songs[track].link, function(err,
+      info) {
+      music.title = playlists[0].songs[track].name;
+      message.channel.sendMessage("Now playing: " + music
+        .title);
+    });
+
+    playlistSetup();
+  });
+}
+
+function save(item, path) {
+  switch (item) {
+    case "playlists":
       fs.writeFile(
-        './playlists.json',
+        './' + path + '.json',
         JSON.stringify(playlists),
-        function (err) {
+        function(err) {
           if (err) {
             console.error('Error saving the file.');
           }
@@ -397,14 +488,18 @@ function save(item) {
   }
 }
 
+function load(item, path) {
+
+}
+
 // Essential Functions
 
 // http://stackoverflow.com/questions/10342728/join-array-from-startindex-to-endindex
-Array.prototype.myJoin = function(seperator,start,end) {
-    if(!start) start = 0;
-    if(!end) end = this.length - 1;
-    end++;
-    return this.slice(start,end).join(seperator);
+Array.prototype.myJoin = function(seperator, start, end) {
+  if (!start) start = 0;
+  if (!end) end = this.length - 1;
+  end++;
+  return this.slice(start, end).join(seperator);
 };
 
 bot.login(token);
